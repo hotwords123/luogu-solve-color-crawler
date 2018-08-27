@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <title>洛谷做题记录</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script src="jquery.min.js" type="text/javascript"></script>
+    <script src="ejs.min.js" type="text/javascript"></script>
+</head>
+<body>
+    <label for="r-file">
+        <div class="r-header">
+            <h1></h1>
+        </div>
+    </label>
+    <div class="r-main">
+        <div class="r-left">
+            <div class="r-problems"></div>
+        </div>
+        <div class="r-right">
+            <div class="r-panel r-summary">
+                <div class="r-panel-title">总览</div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">用户</span>
+                    <span class="r-panel-right" id="r-summary-user"></span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">提交总数</span>
+                    <span class="r-panel-right" id="r-summary-submit"></span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">通过总数</span>
+                    <span class="r-panel-right" id="r-summary-solved"></span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">未知题目</span>
+                    <span class="r-panel-right" id="r-summary-unknown"></span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">统计时间</span>
+                    <span class="r-panel-right" id="r-summary-time"></span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">题目总数</span>
+                    <span class="r-panel-right" id="r-filtered-count"></span>
+                </div>
+            </div>
+            <div class="r-panel r-operations">
+                <div class="r-panel-title">操作</div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">题目页码</span>
+                    <span class="r-panel-right">
+                        <a href="javascript:void(0);" class="r-page-a" data-page="first" title="第一页">&lt;&lt;</a>
+                        <a href="javascript:void(0);" class="r-page-a" data-page="prev" title="上一页">&lt;</a>
+                        <span class="r-page-num">---</span>
+                        <a href="javascript:void(0);" class="r-page-a" data-page="next" title="下一页">&gt;</a>
+                        <a href="javascript:void(0);" class="r-page-a" data-page="last" title="最后一页">&gt;&gt;</a>
+                    </span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">排序方式</span>
+                    <span class="r-panel-right">
+                        <a href="javascript:void(0);" class="r-sort-by" data-sort-by="pid">题号</a>
+                        <a href="javascript:void(0);" class="r-sort-by" data-sort-by="diff">难度</a>
+                        <span>|</span>
+                        <a href="javascript:void(0);" class="r-sort-order" data-order="asc">升序</a>
+                        <a href="javascript:void(0);" class="r-sort-order" data-order="des">降序</a>
+                    </span>
+                </div>
+                <div class="r-table-row">
+                    <span class="r-panel-left">导出统计数据</span>
+                    <span class="r-panel-right">
+                        <a href="javascript:void(0);" id="r-export-json" title="原始数据(json)">原始数据</a>
+                        <a href="javascript:void(0);" id="r-export-txt" title="文本(txt)">文本</a>
+                        <a href="javascript:void(0);" id="r-export-html" title="网页(html)">网页</a>
+                    </span>
+                </div>
+            </div>
+            <div class="r-panel r-difficulty">
+                <div class="r-panel-title">难度</div>
+                <div class="r-difficulty-bar"></div>
+                <div class="r-difficulty-list"></div>
+            </div>
+            <div class="r-panel r-algorithm">
+                <div class="r-panel-title">算法标签</div>
+                <div class="r-algorithm-list"></div>
+            </div>
+        </div>
+    </div>
+    <input id="r-file" type="file" style="display: none;">
+    <script src="script.js" type="text/javascript"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "luogu-solve-color-crawler",
+  "version": "1.0.0",
+  "description": "A crawler with many great features to help you make a summary of the problems you have solved at Luogu",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hotwords123/luogu-solve-color-crawler.git"
+  },
+  "keywords": [
+    "luogu",
+    "OI",
+    "crawler"
+  ],
+  "author": "hotwords",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hotwords123/luogu-solve-color-crawler/issues"
+  },
+  "homepage": "https://github.com/hotwords123/luogu-solve-color-crawler#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "ejs": "^2.6.1"
+  }
+}
