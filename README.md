@@ -44,7 +44,7 @@ npm install
 
 启动爬虫(同样先切换到项目目录下):
 
-`npm run`或`node main.js`
+`npm start`或`node main.js`
 
 然后等待跳出`User ID:`，输入你的UID，回车即开始爬取。
 
