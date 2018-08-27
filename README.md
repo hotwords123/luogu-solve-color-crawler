@@ -53,8 +53,11 @@ npm install
 `Error: xxx`说明爬取某题失败:
 
 - `Request Timeout`: 请求超时(一般为偶发情况)
+
 - `Response Timeout`: 响应超时(一般为偶发情况)
+
 - `HTTP Error XXX`: HTTP状态码不是200时报出，一般是302说明题目不存在之类的
+
 - 其它奇奇gay gay的东西: 可能是bug
 
 默认会重试最多3次: `Retry x/x...`
@@ -66,9 +69,15 @@ npm install
 #### 各文件夹用途：
 
 `node_modules` 存放Node.js模块，**第2步中生成**
+
 `results_raw` 存放爬完的原始数据(json格式)
+
 `results` 存放文本分析结果
+
 `results_html` 存放网页结果
+
 **(以上三个文件夹在爬完一次后生成)**
+
 `view` 原始数据查看器
+
 食用方法: 打开view文件夹下的index.html，点击上方的蓝色区域，把原始数据选进去即可。
