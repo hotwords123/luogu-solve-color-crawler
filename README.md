@@ -4,7 +4,7 @@
 
 #### 这是一个为了让OIer们更加清楚地了解自己在洛谷上的做题情况而编写的爬虫(当然，它也可以轻易地被移植到其它OJ上)。
 
-#### 这个爬虫除了能全自动爬取做题情况(自带错误处理,首次爬取失败后进行3次重试)，还能把爬取结果输出到HTML页面来进一步分析。
+#### 这个爬虫除了能全自动爬取做题情况外，还能把爬取结果输出到HTML页面来进一步分析。
 
 ## 食用指南
 
@@ -12,7 +12,7 @@
 
 **重要：请勿滥用爬虫，否则由此带来的一切后果自负！！！**
 
-### 1. 首先把项目clone到自己电脑上，推荐使用git(当然你也可以偷懒选择Download ZIP)：
+### 1. 首先把项目clone到自己电脑上，推荐使用git(当然你也可以~~~偷懒~~~选择Download ZIP)：
 
 ```bash
 git clone https://github.com/hotwords123/luogu-solve-color-crawler.git
@@ -24,11 +24,15 @@ git clone https://github.com/hotwords123/luogu-solve-color-crawler.git
 npm install
 ```
 
+#### UPDATE：提供简易方法！直接双击打开install.cmd即可！（仅限Windows用户）
+
+**P.S. 建议先把下载源设为国内淘宝镜像：运行setregistry.cmd！**
+
 #### P.S. x1 没有Node.js？
 
 [猛戳这里，zip或msi均可，Linux&MacOS党当我没说](http://nodejs.cn/download/)
 
-**提示：把Node.js加到环境变量Path里！**
+**重要提示：把Node.js加到环境变量Path里！**
 
 #### P.S. x2 如何快速切换目录？
 
@@ -36,19 +40,23 @@ npm install
 
 - **划重点** 打开项目文件夹，Shift+右键，猛戳"在此处打开命令行窗口"
 
-### 3. 获得你的洛谷UID(最简单的一步)：
+### ~~~3. 获得你的洛谷UID(最简单的一步)：~~~
 
-打开你的个人空间，查看浏览器地址栏，你会看到类似`https://www.luogu.org/space/show?uid=<你的UID>`的东西，那个UID就是你的UID。
+~~~打开你的个人空间，查看浏览器地址栏，你会看到类似`https://www.luogu.org/space/show?uid=<你的UID>`的东西，那个UID就是你的UID。~~~
 
-#### P.S. 如何获得别人的洛谷UID？
+#### ~~~P.S. 如何获得别人的洛谷UID？~~~
 
-打开私信，输入他的用户名，点进他的个人空间，其余步骤同上。
+~~~打开私信，输入他的用户名，点进他的个人空间，其余步骤同上。~~~
+
+**UPDATE：不需要了！现在直接输入用户名或UID都可以！**
 
 ### 4. 开始爬取！(这才是最简单的一步)
 
 启动爬虫(同样先切换到项目目录下):
 
 `npm start`或`node main.js`
+
+**UPDATE：提供简易方法！双击打开run.cmd即可！**
 
 然后等待跳出`User ID:`，输入你的UID，回车即开始爬取。
 
@@ -85,3 +93,25 @@ npm install
 `view` 原始数据查看器
 
 食用方法: 打开view文件夹下的index.html，点击上方的蓝色区域，把原始数据选进去即可。
+
+### 自定义爬虫
+
+修改options.json文件即可。
+
+**timeout**：设定HTTP请求超时时间(request是请求，response是响应)
+
+**retry_count**：设定首次爬取失败后的重试次数
+
+**request_headers**：添加自定义请求头
+
+**max_parallel_tasks**：最大并行爬取任务数，设置为1则串行爬取
+
+**wait_time**：爬取前的等待时间，单位：毫秒(each_crawl是每次爬取前，crawl_error是爬取失败后)
+
+#### 关于爬取频率的警告
+
+强烈建议最大并行任务数**不要超过3**，否则后果自负！
+
+如果并行任务数大于1，强烈建议将每次爬取前的等待时间设为100ms以上！
+
+#### 注意：不要修改crawler.json，否则可能导致爬取失败！

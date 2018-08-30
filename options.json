@@ -1,0 +1,15 @@
+{
+    "timeout": {
+        "request": 2000,
+        "response": 2000
+    },
+    "retry_count": 3,
+    "request_headers": {
+        "User-Agent": "luogu-solve-color-crawler/1.0"
+    },
+    "max_parallel_tasks": 2,
+    "wait_time": {
+        "each_crawl": 100,
+        "crawl_error": 1500
+    }
+}

@@ -4,7 +4,7 @@
   "description": "A crawler with many great features to help you make a summary of the problems you have solved at Luogu",
   "main": "main.js",
   "scripts": {
-  	"start": "node main.js",
+    "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
