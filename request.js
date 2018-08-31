@@ -22,18 +22,22 @@ class TimeoutError extends Error {
 
 function httpRequest(options, data) {
 	return new Promise((resolve, reject) => {
-        let h = options.protocol === 'https:' ? https : http;
-		let req = h.request(options, (res) => {
-			if (res.statusCode === 200) {
-				resolve(res);
-			} else {
-				reject(new HTTPError(res.statusCode));
-			}
-		});
-		req.on('error', (err) => reject(err));
-		req.on('timeout', () => reject(new TimeoutError("Request timeout")));
-		if (data) req.write(data);
-		req.end();
+		try {
+			let h = options.protocol === 'https:' ? https : http;
+			let req = h.request(options, (res) => {
+				if (res.statusCode === 200) {
+					resolve(res);
+				} else {
+					reject(new HTTPError(res.statusCode));
+				}
+			});
+			req.on('error', (err) => reject(err));
+			req.on('timeout', () => reject(new TimeoutError("Request timeout")));
+			if (data) req.write(data);
+			req.end();
+		} catch (err) {
+			reject(err);
+		}
 	});
 }
 
@@ -48,16 +52,20 @@ async function requestPage(dest, method, headers, data) {
 
 function requestPageContent(dest, method, headers, encoding) {
 	return new Promise(async function(resolve, reject) {
-		let resp = await requestPage(dest, method, headers);
-		let res = '';
-		let timeout;
-		resp.setEncoding(encoding || 'utf-8');
-		resp.on('data', (chunk) => { res += chunk; });
-		resp.on('end', () => {
-			resolve(res);
-			clearTimeout(timeout);
-		});
-		timeout = setTimeout(() => reject(new TimeoutError("Response timeout")), TIMEOUT.response);
+		try {
+			let resp = await requestPage(dest, method, headers);
+			let res = '';
+			let timeout;
+			resp.setEncoding(encoding || 'utf-8');
+			resp.on('data', (chunk) => { res += chunk; });
+			resp.on('end', () => {
+				resolve(res);
+				clearTimeout(timeout);
+			});
+			timeout = setTimeout(() => reject(new TimeoutError("Response timeout")), TIMEOUT.response);
+		} catch (err) {
+			reject(err);
+		}
 	});
 }
 
