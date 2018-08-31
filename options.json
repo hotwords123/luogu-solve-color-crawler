@@ -10,6 +10,11 @@
     "max_parallel_tasks": 2,
     "wait_time": {
         "each_crawl": 100,
-        "crawl_error": 1500
+        "crawl_error": {
+        	"http_302": 100,
+            "http_503": 1500,
+            "timeout": 1000,
+        	"other": 500
+        }
     }
 }

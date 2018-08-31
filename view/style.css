@@ -27,7 +27,7 @@ body {
     top: 0;
     width: 100%;
     height: 60px;
-    background: linear-gradient(to bottom right, #d9e8ff, #f2f6fd);
+    background: linear-gradient(to bottom, #d9e8ff, #f2f6fd);
     border-bottom: 1px solid #bbb;
     box-shadow: 0 0 8px #bbb;
     z-index: 11;

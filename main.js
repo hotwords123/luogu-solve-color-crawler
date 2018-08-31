@@ -11,10 +11,10 @@ const cheerio  = require('cheerio');
 
 const Tasks    = require('./tasks.js');
 
-const { asyncWork, sleep, existsAsync, mkdirEx, parseString, requestPageContent } = require("./utility.js");
+const { asyncWork, sleep, existsAsync, mkdirEx, parseString } = require("./utility.js");
+const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
 
 const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_PARALLEL_TASKS } = require("./options.json");
-
 const { page_url: PAGE_URL, selectors: SELECTORS } = require("./crawler.json");
 
 async function getUID(user) {
@@ -150,7 +150,13 @@ async function crawlUser(user) {
 						console.log(`Failed to crawl problem ${pid}!`);
 						return null;
 					}
-					await sleep(WAIT_TIME.crawl_error);
+					let waitTime = WAIT_TIME.crawl_error["other"];
+					if (err instanceof HTTPError) {
+						waitTime = WAIT_TIME.crawl_error["http_" + err.statusCode] || waitTime;
+					} else if (err instanceof TimeoutError) {
+						waitTime = WAIT_TIME.crawl_error["timeout"] || waitTime;
+					}
+					await sleep(waitTime);
 				}
 			}
 		};
