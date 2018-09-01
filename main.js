@@ -54,21 +54,25 @@ let ResultSaver = {
 	BASENAME: 'U<uid>(<username>)_<cnt>',
 	RESULTS: [
 		{
+			name: "JSON",
 			saveDir: "results_raw",
 			filename: "<basename>.json",
 			maker: (data) => JSON.stringify(data)
 		},
 		{
+			name: "Text",
 			saveDir: "results",
 			filename: "<basename>.txt",
 			maker: require('./text-result-generator.js')
 		},
 		{
+			name: "HTML",
 			saveDir: "results_html",
 			filename: "<basename>.html",
 			maker: require('./html-result-generator.js')
 		},
 		{
+			name: "Markdown",
 			saveDir: "results_markdown",
 			filename: "<basename>.md",
 			maker: require('./markdown-result-generator.js')
@@ -78,6 +82,18 @@ let ResultSaver = {
 	getSaveFile(basename, item) {
 		return Path.join(__dirname, item.saveDir,
 			parseString(item.filename, { basename }));
+	},
+
+	async _save(res, maker, filename) {
+		let content = await maker(res);
+		await mkdirEx(filename);
+		await asyncWork(fs.writeFile, filename, content, "utf-8");
+	},
+
+	async saveType(res, name, basename) {
+		let tmp = this.RESULTS.findIndex((a) => a.name === name);
+		let filename = this.getSaveFile(basename, tmp);
+		this._save(res, tmp.maker, filename);
 	},
 
 	async save(res) {
@@ -97,14 +113,17 @@ let ResultSaver = {
 
 		for (let i = 0; i < this.RESULTS.length; ++i) {
 
-			let filename = this.getSaveFile(basename, this.RESULTS[i]);
-			let content = await this.RESULTS[i].maker(res);
+			try {
+				let filename = this.getSaveFile(basename, this.RESULTS[i]);
+				this._save(res, this.RESULTS[i].maker, filename);
+			} catch (err) {
+				console.log(`Could not save ${Path.basename(filename)}:`);
+				console.log(err.toString());
+			}
 
-			await mkdirEx(filename);
-			await asyncWork(fs.writeFile, filename, content, "utf-8");
 		}
 
-		return basename;
+		console.log('Results saved to ' + basename);
 	}
 };
 
@@ -183,7 +202,7 @@ async function crawlUser(user) {
 	});
 
 	console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
-	console.log('Results saved to ' + await ResultSaver.save(res));
+	await ResultSaver.save(res);
 }
 
 function rlQuestion(rl, msg) {
