@@ -3,15 +3,12 @@
 
 console.log('Loading modules...');
 
-const fs       = require('fs');
-const Path     = require('path');
-const readline = require('readline');
+const readline    = require('readline');
+const cheerio     = require('cheerio');
+const Tasks       = require('./tasks.js');
+const ResultSaver = require('./result-saver.js');
 
-const cheerio  = require('cheerio');
-
-const Tasks    = require('./tasks.js');
-
-const { asyncWork, sleep, existsAsync, mkdirEx, parseString } = require("./utility.js");
+const { sleep, parseString } = require("./utility.js");
 const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
 
 const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_PARALLEL_TASKS } = require("./options.json");
@@ -49,84 +46,6 @@ async function getProblemInfo(pid) {
 	};
 }
 
-let ResultSaver = {
-	
-	BASENAME: 'U<uid>(<username>)_<cnt>',
-	RESULTS: [
-		{
-			name: "JSON",
-			saveDir: "results_raw",
-			filename: "<basename>.json",
-			maker: (data) => JSON.stringify(data)
-		},
-		{
-			name: "Text",
-			saveDir: "results",
-			filename: "<basename>.txt",
-			maker: require('./text-result-generator.js')
-		},
-		{
-			name: "HTML",
-			saveDir: "results_html",
-			filename: "<basename>.html",
-			maker: require('./html-result-generator.js')
-		},
-		{
-			name: "Markdown",
-			saveDir: "results_markdown",
-			filename: "<basename>.md",
-			maker: require('./markdown-result-generator.js')
-		}
-	],
-
-	getSaveFile(basename, item) {
-		return Path.join(__dirname, item.saveDir,
-			parseString(item.filename, { basename }));
-	},
-
-	async _save(res, maker, filename) {
-		let content = await maker(res);
-		await mkdirEx(filename);
-		await asyncWork(fs.writeFile, filename, content, "utf-8");
-	},
-
-	async saveType(res, name, basename) {
-		let tmp = this.RESULTS.findIndex((a) => a.name === name);
-		let filename = this.getSaveFile(basename, tmp);
-		this._save(res, tmp.maker, filename);
-	},
-
-	async save(res) {
-
-		let basename;
-
-		for (let cnt = 1; ; ++cnt) {
-
-			basename = parseString(this.BASENAME, {
-				uid: res.uid,
-				username: res.username,
-				cnt: cnt
-			});
-
-			if (!await existsAsync(this.getSaveFile(basename, this.RESULTS[0]))) break;
-		}
-
-		for (let i = 0; i < this.RESULTS.length; ++i) {
-
-			try {
-				let filename = this.getSaveFile(basename, this.RESULTS[i]);
-				this._save(res, this.RESULTS[i].maker, filename);
-			} catch (err) {
-				console.log(`Could not save ${Path.basename(filename)}:`);
-				console.log(err.toString());
-			}
-
-		}
-
-		console.log('Results saved to ' + basename);
-	}
-};
-
 async function crawlUser(user) {
 
 	let uid_data = await getUID(user);
@@ -136,7 +55,7 @@ async function crawlUser(user) {
 		return;
 	}
 
-	let uid = uid_data["more"].uid;
+	let uid = parseInt(uid_data["more"].uid);
 	
 	let res = {};
 
@@ -202,7 +121,15 @@ async function crawlUser(user) {
 	});
 
 	console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
-	await ResultSaver.save(res);
+	await ResultSaver.save(res, {
+		onerror({ filename, error: err }) {
+			console.log(`Could not save ${filename}:`);
+			console.log(err.toString());
+		},
+		onend({ basename }) {
+			console.log('Results saved to' + basename);
+		}
+	});
 }
 
 function rlQuestion(rl, msg) {
