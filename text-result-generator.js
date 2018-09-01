@@ -4,6 +4,8 @@
 const SEPARATOR = '--------------------';
 const EOL = require('os').EOL;
 
+const DIFFICULTY_TAGS = require('./difficulty-tags.json').map((a) => a.name);
+
 let sections, data;
 
 function makeSummary() {
@@ -23,7 +25,7 @@ function makeSummary() {
 function makeDifficultyResult() {
 
     let solved = data.solved;
-    let names = [], lists = [];
+    let names = DIFFICULTY_TAGS, lists = names.map(() => []);
 
     solved.forEach((prob) => {
         let p = names.indexOf(prob.difficulty);
@@ -55,30 +57,34 @@ function makeDifficultyResult() {
 function makeAlgorithmResult() {
 
     let solved = data.solved;
-    let names = [], lists = [];
+    let items = [];
 
     solved.forEach((prob) => {
         let desc = prob.pid + ' ' + prob.name + ` (难度: ${prob.difficulty})`;
         prob.algorithms.forEach((algorithm) => {
-            let p = names.indexOf(algorithm);
+            let p = items.findIndex((a) => a.name === algorithm);
             if (p === -1) {
-                p = names.length;
-                names.push(algorithm);
-                lists.push([]);
+                p = items.length;
+                items.push({
+                    name: algorithm,
+                    list: []
+                });
             }
-            lists[p].push(desc);
+            items[p].list.push(desc);
         });
     });
 
+    items.sort((a, b) => a.list.length - b.list.length);
+
     sections.push({
         title: '算法总览',
-        detail: names.map((name, i) => `${name}: ${lists[i].length}`)
+        detail: items.map((item) => `${item.name}: ${item.list.length}`)
     });
 
-    names.forEach((name, i) => {
+    items.forEach((item) => {
         sections.push({
-            title: '算法标签: ' + name,
-            detail: lists[i]
+            title: '算法标签: ' + item.name,
+            detail: item.list
         });
     });
 }

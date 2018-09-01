@@ -44,4 +44,10 @@ function parseString(str, arg) {
 	});
 }
 
-module.exports = { asyncWork, sleep, existsAsync, mkdirEx, parseString };
+function randomString(char, len) {
+    let res = '';
+    while (len--) res += char[Math.floor(Math.random() * char.length)];
+    return res;
+}
+
+module.exports = { asyncWork, sleep, existsAsync, mkdirEx, parseString, randomString };

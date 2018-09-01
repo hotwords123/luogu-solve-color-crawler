@@ -1,0 +1,34 @@
+[
+    {
+        "name": "入门难度",
+        "color": "e74c3c"
+    },
+    {
+        "name": "普及-",
+        "color": "e67e22"
+    },
+    {
+        "name": "普及/提高-",
+        "color": "f1c40f"
+    },
+    {
+        "name": "普及+/提高",
+        "color": "5eb95e"
+    },
+    {
+        "name": "提高+/省选-",
+        "color": "3498db"
+    },
+    {
+        "name": "省选/NOI-",
+        "color": "8e44ad"
+    },
+    {
+        "name": "NOI/NOI+/CTSC",
+        "color": "2e468c"
+    },
+    {
+        "name": "尚无评定",
+        "color": "bbbbbb"
+    }
+]

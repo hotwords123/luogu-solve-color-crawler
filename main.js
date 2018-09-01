@@ -67,6 +67,11 @@ let ResultSaver = {
 			saveDir: "results_html",
 			filename: "<basename>.html",
 			maker: require('./html-result-generator.js')
+		},
+		{
+			saveDir: "results_markdown",
+			filename: "<basename>.md",
+			maker: require('./markdown-result-generator.js')
 		}
 	],
 
