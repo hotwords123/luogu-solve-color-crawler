@@ -7,6 +7,7 @@ const readline    = require('readline');
 const cheerio     = require('cheerio');
 const Tasks       = require('./tasks.js');
 const ResultSaver = require('./result-saver.js');
+const ProbCache   = require('./problem-cache.js');
 
 const { sleep, parseString } = require("./utility.js");
 const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
@@ -33,7 +34,8 @@ async function getUserProfile(uid) {
     return res;
 }
 
-async function getProblemInfo(pid) {
+async function getProblemInfo(pid, callback) {
+    await sleep(WAIT_TIME.each_crawl);
     let content = await requestPageContent( parseString(PAGE_URL.problem, { pid: pid }) );
     let $ = cheerio.load(content);
     let algorithms = [];
@@ -76,14 +78,22 @@ async function crawlUser(user) {
     res.solved = [];
     res.solvedUnknown = [];
 
+    let requestCount = 0, cacheCount = 0;
+
     let tasks = solved_list.map((pid) => {
         return async () => {
             let cnt = 0;
-            await sleep(WAIT_TIME.each_crawl);
             for (;;) {
                 try {
-                    let info = await getProblemInfo(pid);
-                    if (!info.difficulty) throw new Error("Unknown difficulty");
+                    let info = ProbCache.get(pid);
+                    if (!info) {
+                        ++requestCount;
+                        info = await getProblemInfo(pid);
+                        if (!info.difficulty) throw new Error("Unknown difficulty");
+                        ProbCache.set(pid, info);
+                    } else {
+                        ++cacheCount;
+                    }
                     return info;
                 } catch (err) {
                     console.log(err.toString());
@@ -121,13 +131,15 @@ async function crawlUser(user) {
     });
 
     console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
+    console.log(`Request count: ${requestCount}`);
+    console.log(`Cache count: ${cacheCount}`);
     await ResultSaver.save(res, {
         onerror({ filename, error: err }) {
             console.log(`Could not save ${filename}:`);
             console.log(err.toString());
         },
         onend({ basename }) {
-            console.log('Results saved to' + basename);
+            console.log('Results saved to ' + basename);
         }
     });
 }
@@ -144,6 +156,8 @@ function rlQuestion(rl, msg) {
         input: process.stdin,
         output: process.stdout
     });
+
+    await ProbCache.init();
 
     for (;;) {
         try {

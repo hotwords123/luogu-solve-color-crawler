@@ -7,9 +7,9 @@
     "request_headers": {
         "User-Agent": "luogu-solve-color-crawler/1.0"
     },
-    "max_parallel_tasks": 2,
+    "max_parallel_tasks": 3,
     "wait_time": {
-        "each_crawl": 100,
+        "each_crawl": 150,
         "crawl_error": {
             "http_302": 100,
             "http_503": 1500,
