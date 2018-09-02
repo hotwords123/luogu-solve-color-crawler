@@ -90,7 +90,9 @@ npm install
 
 `results_markdown` 存放生成的Markdown代码
 
-**(以上三个文件夹在爬完一次后生成)**
+**(以上四个文件夹在爬完一次后生成)**
+
+`cache` 缓存文件，加快爬取速度，可以删除
 
 `view` 原始数据查看器
 
@@ -109,6 +111,8 @@ npm install
 **max_parallel_tasks**：最大并行爬取任务数，设置为1则串行爬取
 
 **wait_time**：爬取前的等待时间，单位：毫秒(each_crawl是每次爬取前，crawl_error是爬取失败后)
+
+**cache_age_days**: 缓存的过期时间，以天为单位，设为0表示没有缓存，负数表示缓存不会过期
 
 #### 关于爬取频率的警告
 

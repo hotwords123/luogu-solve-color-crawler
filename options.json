@@ -16,5 +16,6 @@
             "timeout": 1000,
             "other": 500
         }
-    }
+    },
+    "cache_age_days": 7
 }

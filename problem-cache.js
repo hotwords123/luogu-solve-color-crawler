@@ -4,11 +4,13 @@
 const fs   = require('fs');
 const Path = require('path');
 
+const { cache_age_days: CACHE_AGE_DAYS } = require('./options.json');
+const CACHE_AGE = CACHE_AGE_DAYS < 0 ? Infinity : CACHE_AGE_DAYS * 24 * 3600 * 1000;
+
 const { asyncWork, mkdirEx } = require('./utility.js');
 
 const CACHE_FILE = Path.join(__dirname, "cache/problems.json");
 const CURRENT_VERSION = 1;
-const CACHE_AGE = 1000 * 3600 * 24 * 3;
 
 let saveInterval = null;
 let cacheChanged = false;
