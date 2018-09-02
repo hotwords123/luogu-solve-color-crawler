@@ -100,7 +100,7 @@ function makeUnknownResult() {
 }
 
 module.exports = async function (res) {
-		
+        
     sections = [];
     data = res;
 

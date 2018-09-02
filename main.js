@@ -15,143 +15,143 @@ const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_
 const { page_url: PAGE_URL, selectors: SELECTORS } = require("./crawler.json");
 
 async function getUID(user) {
-	let content = await requestPageContent( parseString(PAGE_URL.getuid, { user: user }) );
-	return JSON.parse(content);
+    let content = await requestPageContent( parseString(PAGE_URL.getuid, { user: user }) );
+    return JSON.parse(content);
 }
 
 async function getUserProfile(uid) {
-	let content = await requestPageContent( parseString(PAGE_URL.profile, { uid: uid }) );
-	let $ = cheerio.load(content);
-	let res = {};
-	let tmp = $(SELECTORS.userProfile.username).text().match(/^U-?\d+ (.+)$/);
-	res.username = tmp ? tmp[1] : "";
-	res.submitTotal = $(SELECTORS.userProfile.submitTotal).text();
-	res.solvedTotal = $(SELECTORS.userProfile.solvedTotal).text();
-	res.solved = [];
-	$(SELECTORS.userProfile.solvedListItem)
-		.each((i, a) => res.solved.push($(a).text()));
-	return res;
+    let content = await requestPageContent( parseString(PAGE_URL.profile, { uid: uid }) );
+    let $ = cheerio.load(content);
+    let res = {};
+    let tmp = $(SELECTORS.userProfile.username).text().match(/^U-?\d+ (.+)$/);
+    res.username = tmp ? tmp[1] : "";
+    res.submitTotal = $(SELECTORS.userProfile.submitTotal).text();
+    res.solvedTotal = $(SELECTORS.userProfile.solvedTotal).text();
+    res.solved = [];
+    $(SELECTORS.userProfile.solvedListItem)
+        .each((i, a) => res.solved.push($(a).text()));
+    return res;
 }
 
 async function getProblemInfo(pid) {
-	let content = await requestPageContent( parseString(PAGE_URL.problem, { pid: pid }) );
-	let $ = cheerio.load(content);
-	let algorithms = [];
-	$(SELECTORS.problemInfo.tagAlgorithm).each((i, a) => algorithms.push($(a).text()));
-	return {
-		pid: pid,
-		name: $(SELECTORS.problemInfo.problemName).text().trim().slice(pid.length + 1),
-		difficulty: $(SELECTORS.problemInfo.tagDifficulty).text(),
-		algorithms: algorithms
-	};
+    let content = await requestPageContent( parseString(PAGE_URL.problem, { pid: pid }) );
+    let $ = cheerio.load(content);
+    let algorithms = [];
+    $(SELECTORS.problemInfo.tagAlgorithm).each((i, a) => algorithms.push($(a).text()));
+    return {
+        pid: pid,
+        name: $(SELECTORS.problemInfo.problemName).text().trim().slice(pid.length + 1),
+        difficulty: $(SELECTORS.problemInfo.tagDifficulty).text(),
+        algorithms: algorithms
+    };
 }
 
 async function crawlUser(user) {
 
-	let uid_data = await getUID(user);
+    let uid_data = await getUID(user);
 
-	if (uid_data.code !== 200) {
-		console.log("Cannot get uid: " + uid_data["message"]);
-		return;
-	}
+    if (uid_data.code !== 200) {
+        console.log("Cannot get uid: " + uid_data["message"]);
+        return;
+    }
 
-	let uid = parseInt(uid_data["more"].uid);
-	
-	let res = {};
+    let uid = parseInt(uid_data["more"].uid);
+    
+    let res = {};
 
-	res.time = Date.now();
-	res.uid = uid;
+    res.time = Date.now();
+    res.uid = uid;
 
-	console.log('Crawling user profile...');
+    console.log('Crawling user profile...');
 
-	let userProfile = await getUserProfile(uid);
-	let solved_list = userProfile.solved;
+    let userProfile = await getUserProfile(uid);
+    let solved_list = userProfile.solved;
 
-	res.username = userProfile.username;
-	res.submitTotal = userProfile.submitTotal;
-	res.solvedTotal = userProfile.solvedTotal;
+    res.username = userProfile.username;
+    res.submitTotal = userProfile.submitTotal;
+    res.solvedTotal = userProfile.solvedTotal;
 
-	console.log(`User ID: ${uid}\nUsername: ${userProfile.username}`);
+    console.log(`User ID: ${uid}\nUsername: ${userProfile.username}`);
 
-	res.solved = [];
-	res.solvedUnknown = [];
+    res.solved = [];
+    res.solvedUnknown = [];
 
-	let tasks = solved_list.map((pid) => {
-		return async () => {
-			let cnt = 0;
-			await sleep(WAIT_TIME.each_crawl);
-			for (;;) {
-				try {
-					let info = await getProblemInfo(pid);
-					if (!info.difficulty) throw new Error("Unknown difficulty");
-					return info;
-				} catch (err) {
-					console.log(err.toString());
-					if (cnt++ < RETRY_COUNT) {
-						console.log(`Retry ${cnt}/${RETRY_COUNT} for problem ${pid}...`);
-					} else {
-						console.log(`Failed to crawl problem ${pid}!`);
-						return null;
-					}
-					let waitTime = WAIT_TIME.crawl_error["other"];
-					if (err instanceof HTTPError) {
-						waitTime = WAIT_TIME.crawl_error["http_" + err.statusCode] || waitTime;
-					} else if (err instanceof TimeoutError) {
-						waitTime = WAIT_TIME.crawl_error["timeout"] || waitTime;
-					}
-					await sleep(waitTime);
-				}
-			}
-		};
-	});
+    let tasks = solved_list.map((pid) => {
+        return async () => {
+            let cnt = 0;
+            await sleep(WAIT_TIME.each_crawl);
+            for (;;) {
+                try {
+                    let info = await getProblemInfo(pid);
+                    if (!info.difficulty) throw new Error("Unknown difficulty");
+                    return info;
+                } catch (err) {
+                    console.log(err.toString());
+                    if (cnt++ < RETRY_COUNT) {
+                        console.log(`Retry ${cnt}/${RETRY_COUNT} for problem ${pid}...`);
+                    } else {
+                        console.log(`Failed to crawl problem ${pid}!`);
+                        return null;
+                    }
+                    let waitTime = WAIT_TIME.crawl_error["other"];
+                    if (err instanceof HTTPError) {
+                        waitTime = WAIT_TIME.crawl_error["http_" + err.statusCode] || waitTime;
+                    } else if (err instanceof TimeoutError) {
+                        waitTime = WAIT_TIME.crawl_error["timeout"] || waitTime;
+                    }
+                    await sleep(waitTime);
+                }
+            }
+        };
+    });
 
-	let tasks_result = await Tasks.run(tasks, {
-		max_parallel_tasks: MAX_PARALLEL_TASKS,
-		ontaskend({ finished, total }) {
-			console.log(`Crawling: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
-		}
-	});
+    let tasks_result = await Tasks.run(tasks, {
+        max_parallel_tasks: MAX_PARALLEL_TASKS,
+        ontaskend({ finished, total }) {
+            console.log(`Crawling: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
+        }
+    });
 
-	tasks_result.forEach((data, i) => {
-		if (data) {
-			res.solved.push(data);
-		} else {
-			res.solvedUnknown.push(solved_list[i]);
-		}
-	});
+    tasks_result.forEach((data, i) => {
+        if (data) {
+            res.solved.push(data);
+        } else {
+            res.solvedUnknown.push(solved_list[i]);
+        }
+    });
 
-	console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
-	await ResultSaver.save(res, {
-		onerror({ filename, error: err }) {
-			console.log(`Could not save ${filename}:`);
-			console.log(err.toString());
-		},
-		onend({ basename }) {
-			console.log('Results saved to' + basename);
-		}
-	});
+    console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
+    await ResultSaver.save(res, {
+        onerror({ filename, error: err }) {
+            console.log(`Could not save ${filename}:`);
+            console.log(err.toString());
+        },
+        onend({ basename }) {
+            console.log('Results saved to' + basename);
+        }
+    });
 }
 
 function rlQuestion(rl, msg) {
-	return new Promise((resolve) => {
-		rl.question(msg, (str) => resolve(str));
-	});
+    return new Promise((resolve) => {
+        rl.question(msg, (str) => resolve(str));
+    });
 }
 
 (async () => {
-	
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout
-	});
+    
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
 
-	for (;;) {
-		try {
-			await crawlUser(await rlQuestion(rl, 'User ID / Username: '));
-		} catch (err) {
-			console.log('Failed to crawl.');
-			console.log(err);
-		}
-	}
+    for (;;) {
+        try {
+            await crawlUser(await rlQuestion(rl, 'User ID / Username: '));
+        } catch (err) {
+            console.log('Failed to crawl.');
+            console.log(err);
+        }
+    }
 
 })();

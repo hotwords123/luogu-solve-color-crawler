@@ -1,8 +1,8 @@
 {
     "page_url": {
         "getuid": "https://www.luogu.org/space/ajax_getuid?username=<user>",
-	    "profile": "https://www.luogu.org/space/show?uid=<uid>",
-	    "problem": "https://www.luogu.org/problemnew/show/<pid>"
+        "profile": "https://www.luogu.org/space/show?uid=<uid>",
+        "problem": "https://www.luogu.org/problemnew/show/<pid>"
     },
     "selectors": {
         "userProfile": {

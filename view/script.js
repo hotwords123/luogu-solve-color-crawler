@@ -20,42 +20,42 @@ function downloadFile(content, filename, mimeType) {
 }
 
 class DataMapError extends Error {
-	constructor(...arg) {
-		super(...arg);
-	}
+    constructor(...arg) {
+        super(...arg);
+    }
 }
 
 class DataMap {
 
-	constructor(arr) {
-		this.head = arr[0];
-		this.body = arr.slice(1);
-	}
+    constructor(arr) {
+        this.head = arr[0];
+        this.body = arr.slice(1);
+    }
 
-	getCID(col) {
-		let cid = this.head.indexOf(col);
-		if (cid === -1) throw new DataMapError(`Column "${col}" not found`);
-		return cid;
-	}
+    getCID(col) {
+        let cid = this.head.indexOf(col);
+        if (cid === -1) throw new DataMapError(`Column "${col}" not found`);
+        return cid;
+    }
 
-	getRID(col, value) {
-		let cid = this.getCID(col);
-		return this.body.findIndex((row) => {
-			return row[cid] === value;
-		});
-	}
+    getRID(col, value) {
+        let cid = this.getCID(col);
+        return this.body.findIndex((row) => {
+            return row[cid] === value;
+        });
+    }
 
-	lookupRow(col, value) {
-		let rid = this.getRID(col, value);
-		if (rid === -1) return null;
-		return this.body[rid];
-	}
+    lookupRow(col, value) {
+        let rid = this.getRID(col, value);
+        if (rid === -1) return null;
+        return this.body[rid];
+    }
 
-	lookup(col, value, col2) {
-		let row = this.lookupRow(col, value);
-		let cid2 = this.getCID(col2);
-		if (!row) return null;
-		return row[cid2];
+    lookup(col, value, col2) {
+        let row = this.lookupRow(col, value);
+        let cid2 = this.getCID(col2);
+        if (!row) return null;
+        return row[cid2];
     }
 
     lookupByRID(rid, col) {

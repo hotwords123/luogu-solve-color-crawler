@@ -47,46 +47,43 @@ async function saveItem(res, maker, filename) {
 
 module.exports = {
 
+    get resultTypes() {
+        return RESULTS.map((a) => a.name);
+    },
+
     async getContent(res, name) {
         let tmp = RESULTS.find((a) => a.name === name);
         if (!tmp) return null;
         return await tmp.maker(res);
     },
 
-	async saveType(res, name, basename) {
-        let tmp = RESULTS.find((a) => a.name === name);
-        if (!tmp) return;
-		let filename = getSaveFile(basename, tmp);
-		await saveItem(res, tmp.maker, filename);
-	},
-
-	async save(res, options) {
+    async save(res, options) {
 
         let basename;
         
         options = options || {};
 
-		for (let cnt = 1; ; ++cnt) {
+        for (let cnt = 1; ; ++cnt) {
 
-			basename = parseString(BASENAME, {
-				uid: res.uid,
-				username: res.username,
-				cnt: cnt
-			});
+            basename = parseString(BASENAME, {
+                uid: res.uid,
+                username: res.username,
+                cnt: cnt
+            });
 
-			if (!await existsAsync(getSaveFile(basename, RESULTS[0]))) break;
-		}
+            if (!await existsAsync(getSaveFile(basename, RESULTS[0]))) break;
+        }
 
-		for (let i = 0; i < RESULTS.length; ++i) {
+        for (let i = 0; i < RESULTS.length; ++i) {
 
             let obj = RESULTS[i];
             let filename;
 
-			try {
-				filename = getSaveFile(basename, obj);
-				await saveItem(res, obj.maker, filename);
-			} catch (err) {
-				if (typeof options.onerror === 'function') {
+            try {
+                filename = getSaveFile(basename, obj);
+                await saveItem(res, obj.maker, filename);
+            } catch (err) {
+                if (typeof options.onerror === 'function') {
                     options.onerror({
                         name: obj.name,
                         basename: basename,
@@ -94,14 +91,14 @@ module.exports = {
                         error: err
                     });
                 }
-			}
+            }
 
-		}
+        }
 
-		if (typeof options.onend === 'function') {
+        if (typeof options.onend === 'function') {
             options.onend({
                 basename: basename
             });
         }
-	}
+    }
 };
