@@ -7,8 +7,8 @@
     "selectors": {
         "userProfile": {
             "username": ".lg-toolbar>h1",
-            "submitTotal": "li:nth-child(1) .lg-bignum-num",
-            "solvedTotal": "li:nth-child(2) .lg-bignum-num",
+            "submitTotal": "li:nth-child(1)>.lg-bignum-num",
+            "solvedTotal": "li:nth-child(2)>.lg-bignum-num",
             "solvedListItem": ".am-u-md-4.lg-right .lg-article.am-hide-sm:nth-child(2)>a"
         },
         "problemInfo": {

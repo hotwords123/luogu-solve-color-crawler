@@ -7,7 +7,7 @@
     "request_headers": {
         "User-Agent": "luogu-solve-color-crawler/1.0"
     },
-    "max_parallel_tasks": 3,
+    "max_parallel_tasks": 2,
     "wait_time": {
         "each_crawl": 150,
         "crawl_error": {
@@ -17,5 +17,5 @@
             "other": 500
         }
     },
-    "cache_age_days": 7
+    "cache_age_days": 7000
 }
