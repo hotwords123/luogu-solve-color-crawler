@@ -40,13 +40,13 @@ npm install
 
 - **划重点** 打开项目文件夹，Shift+右键，猛戳"在此处打开命令行窗口"
 
-### ~~~3. 获得你的洛谷UID(最简单的一步)：~~~
+### ~~3. 获得你的洛谷UID(最简单的一步)：~~
 
-~~~打开你的个人空间，查看浏览器地址栏，你会看到类似`https://www.luogu.org/space/show?uid=<你的UID>`的东西，那个UID就是你的UID。~~~
+~~打开你的个人空间，查看浏览器地址栏，你会看到类似`https://www.luogu.org/space/show?uid=<你的UID>`的东西，那个UID就是你的UID。~~
 
-#### ~~~P.S. 如何获得别人的洛谷UID？~~~
+#### ~~P.S. 如何获得别人的洛谷UID？~~
 
-~~~打开私信，输入他的用户名，点进他的个人空间，其余步骤同上。~~~
+~~打开私信，输入他的用户名，点进他的个人空间，其余步骤同上。~~
 
 **UPDATE：不需要了！现在直接输入用户名或UID都可以！**
 
@@ -56,7 +56,7 @@ npm install
 
 `npm start`或`node main.js`
 
-**UPDATE：提供简易方法！双击打开run.cmd即可！**
+**UPDATE：提供简易方法——双击打开run.cmd即可！**
 
 然后等待跳出`User ID:`，输入你的UID，回车即开始爬取。
 
@@ -102,24 +102,45 @@ npm install
 
 修改options.json文件即可。
 
-**timeout**：设定HTTP请求超时时间(request是请求，response是响应)
+**timeout**：设定HTTP请求超时时间，单位：毫秒 (request是请求，response是响应)
 
 **retry_count**：设定首次爬取失败后的重试次数
 
-**request_headers**：添加自定义请求头
+**request_headers**：添加自定义请求头 (可以修改其中的cookie字段来实现登录，详见下文)
 
 **max_parallel_tasks**：最大并行爬取任务数，设置为1则串行爬取
 
-**wait_time**：爬取前的等待时间，单位：毫秒(each_crawl是每次爬取前，crawl_error是爬取失败后)
+**wait_time**：爬取前的等待时间，单位：毫秒 (each_crawl是每次爬取前，crawl_error是爬取失败后)
 
 **cache_age_days**: 缓存的过期时间，以天为单位，设为0表示没有缓存，负数表示缓存不会过期
 
-#### 关于爬取频率的警告
+#### 注意事项
+
+**1. 关于爬取频率的警告**
 
 强烈建议最大并行任务数**不要超过3**，否则后果自负！
 
 如果并行任务数大于1，强烈建议将每次爬取前的等待时间设为100ms以上！
 
-#### 注意：不要修改crawler.json，否则可能导致爬取失败！
+**2. 关于文件**
+
+**不要**修改`crawler.json`，否则可能导致爬取失败！
+
+#### 对于完全隐私保护的用户
+
+1. 获取自己在洛谷的cookie，方法自行百度或Google。
+
+2. 把自己的cookie(形如`__client_id=xxx; _uid=xxx`)加到`options.json`中的`request_headers`字段中。
+
+示例：
+
+```json
+// ...
+"request_headers": {
+    // ...
+    "cookie": "__client_id=xxx; _uid=xxx"
+},
+// ...
+```
 
 #### UPDATE：由于更新暂时取消了查看器中的导出功能
