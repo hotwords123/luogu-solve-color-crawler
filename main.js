@@ -29,7 +29,7 @@ async function getUserProfile(uid) {
     res.submitTotal = $(SELECTORS.userProfile.submitTotal).text();
     res.solvedTotal = $(SELECTORS.userProfile.solvedTotal).text();
     res.solved = [];
-    $(SELECTORS.userProfile.solvedListItem)
+    $($(SELECTORS.userProfile.solvedList).get(0)).find('div>a')
         .each((i, a) => res.solved.push($(a).text()));
     return res;
 }
