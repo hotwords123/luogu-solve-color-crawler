@@ -134,12 +134,13 @@ npm install
 
 示例：
 
-```json
-// ...
+```
+// 一些东西
 "request_headers": {
-    "cookie": "__client_id=xxx; _uid=xxx"
+    // 一些东西
+    "cookie": "__client_id=xxx; _uid=xxx" // 在末尾加上这行，记得上一行要补上逗号（如果有）
 },
-// ...
+// 一些东西
 ```
 
 #### UPDATE：由于更新暂时取消了查看器中的导出功能
