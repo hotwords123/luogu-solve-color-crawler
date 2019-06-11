@@ -8,8 +8,7 @@
         "userProfile": {
             "username": ".lg-toolbar>h1",
             "submitTotal": "li:nth-child(1)>.lg-bignum-num",
-            "solvedTotal": "li:nth-child(2)>.lg-bignum-num",
-            "solvedList": ".am-u-md-4.lg-right .lg-article.am-hide-sm"
+            "solvedTotal": "li:nth-child(2)>.lg-bignum-num"
         },
         "problemInfo": {
             "problemName": ".lg-toolbar>h1",

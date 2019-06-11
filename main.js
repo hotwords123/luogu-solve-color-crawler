@@ -29,7 +29,16 @@ async function getUserProfile(uid) {
     res.submitTotal = $(SELECTORS.userProfile.submitTotal).text();
     res.solvedTotal = $(SELECTORS.userProfile.solvedTotal).text();
     res.solved = [];
-    $($(SELECTORS.userProfile.solvedList).get(0)).find('div>a')
+    let $h2 = $('h2');
+    let $solvedBox = null;
+    $h2.each((i, a) => {
+        if ($(a).text() === '通过题目') {
+            $solvedBox = $(a).parent();
+            return false;
+        }
+        return true;
+    });
+    $solvedBox.find('div>a')
         .each((i, a) => res.solved.push($(a).text()));
     return res;
 }
