@@ -54,7 +54,7 @@ async function saveCache(force) {
     savingCache = false;
 
     if (forceSaving) {
-        forceSaving = true;
+        forceSaving = false;
         await saveCache(false);
     }
     
@@ -66,7 +66,7 @@ module.exports = {
         await readCache();
         cacheChanged = true;
         await saveCache();
-        saveInterval = setInterval(async () => await saveCache(false), 10000);
+        saveInterval = setInterval(async () => await saveCache(false), 5000);
     },
 
     get(pid) {

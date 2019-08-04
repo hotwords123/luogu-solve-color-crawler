@@ -15,6 +15,8 @@ const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
 const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_PARALLEL_TASKS } = require("./options.json");
 const { page_url: PAGE_URL, selectors: SELECTORS } = require("./crawler.json");
 
+let lfeConfig = null;
+
 async function getUID(user) {
     let content = await requestPageContent( parseString(PAGE_URL.getuid, { user: user }) );
     return JSON.parse(content);
@@ -43,17 +45,31 @@ async function getUserProfile(uid) {
     return res;
 }
 
-async function getProblemInfo(pid, callback) {
+async function getConfig() {
+    let content = await requestPageContent( parseString(PAGE_URL.config, {}) );
+    return JSON.parse(content);
+}
+
+async function getProblemInfo(pid) {
     await sleep(WAIT_TIME.each_crawl);
     let content = await requestPageContent( parseString(PAGE_URL.problem, { pid: pid }) );
-    let $ = cheerio.load(content);
-    let algorithms = [];
-    $(SELECTORS.problemInfo.tagAlgorithm).each((i, a) => algorithms.push($(a).text()));
+    const before = '<script>window._feInjection = JSON.parse(decodeURIComponent("', after = '"));';
+    let lpos = content.indexOf(before);
+    if (lpos === -1) throw new Error("failed to locate data");
+    lpos += before.length;
+    let rpos = content.indexOf(after, lpos);
+    if (lpos === -1) throw new Error("failed to locate data");
+    let data = JSON.parse(decodeURIComponent(content.slice(lpos, rpos)));
+    if (data.code !== 200) throw new Error("code is not 200");
+    let problem = data.currentData.problem;
     return {
         pid: pid,
-        name: $(SELECTORS.problemInfo.problemName).text().trim().slice(pid.length + 1),
-        difficulty: $(SELECTORS.problemInfo.tagDifficulty).text(),
-        algorithms: algorithms
+        name: problem.title,
+        difficulty: lfeConfig.problemDifficulty.find(a => a.id === problem.difficulty).name,
+        algorithms: problem.tags.map(id => {
+            let tag = lfeConfig.tags[id];
+            return tag.type === 'Algorithm' ? tag.name : null
+        }).filter(a => !!a)
     };
 }
 
@@ -167,6 +183,14 @@ function rlQuestion(rl, msg) {
     });
 
     await ProbCache.init();
+
+    try {
+        console.log('Fetching config...');
+        lfeConfig = await getConfig();
+    } catch (err) {
+        console.log('Failed to fetch config. Try restarting this program.');
+        process.exit(0);
+    }
 
     for (;;) {
         try {

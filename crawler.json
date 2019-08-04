@@ -2,18 +2,14 @@
     "page_url": {
         "getuid": "https://www.luogu.org/space/ajax_getuid?username=<user>",
         "profile": "https://www.luogu.org/space/show?uid=<uid>",
-        "problem": "https://www.luogu.org/problemnew/show/<pid>"
+        "config": "https://www.luogu.org/_lfe/config",
+        "problem": "https://www.luogu.org/problem/<pid>"
     },
     "selectors": {
         "userProfile": {
             "username": ".lg-toolbar>h1",
             "submitTotal": "li:nth-child(1)>.lg-bignum-num",
             "solvedTotal": "li:nth-child(2)>.lg-bignum-num"
-        },
-        "problemInfo": {
-            "problemName": ".lg-toolbar>h1",
-            "tagAlgorithm": ".lg-tag.lg-bg-pink.am-hide",
-            "tagDifficulty": ".lg-summary-content ul>li:nth-child(5)>span>span"
         }
     }
 }
