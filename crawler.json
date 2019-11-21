@@ -1,15 +1,8 @@
 {
     "page_url": {
-        "getuid": "https://www.luogu.org/space/ajax_getuid?username=<user>",
-        "profile": "https://www.luogu.org/space/show?uid=<uid>",
+        "getuid": "https://www.luogu.org/fe/api/user/search?keyword=<keyword>",
         "config": "https://www.luogu.org/_lfe/config",
+        "profile": "https://www.luogu.org/user/<uid>",
         "problem": "https://www.luogu.org/problem/<pid>"
-    },
-    "selectors": {
-        "userProfile": {
-            "username": ".lg-toolbar>h1",
-            "submitTotal": "li:nth-child(1)>.lg-bignum-num",
-            "solvedTotal": "li:nth-child(2)>.lg-bignum-num"
-        }
     }
 }

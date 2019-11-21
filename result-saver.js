@@ -1,10 +1,10 @@
 
 'use strict';
 
-const fs   = require('fs');
+const fs   = require('fs-extra');
 const Path = require('path');
 
-const { asyncWork, mkdirEx, existsAsync, parseString } = require('./utility.js');
+const { parseString } = require('./utility.js');
 
 const BASENAME = 'U<uid>(<username>)_<cnt>';
 const RESULTS = [
@@ -41,8 +41,8 @@ function getSaveFile(basename, item) {
 
 async function saveItem(res, maker, filename) {
     let content = await maker(res);
-    await mkdirEx(filename);
-    await asyncWork(fs.writeFile, filename, content, "utf-8");
+    await fs.ensureDir(Path.dirname(filename));
+    await fs.writeFile(filename, content, "utf-8");
 }
 
 module.exports = {
@@ -71,7 +71,11 @@ module.exports = {
                 cnt: cnt
             });
 
-            if (!await existsAsync(getSaveFile(basename, RESULTS[0]))) break;
+            try {
+                fs.statSync(getSaveFile(basename, RESULTS[0]));
+            } catch (err) {
+                break;
+            }
         }
 
         for (let i = 0; i < RESULTS.length; ++i) {

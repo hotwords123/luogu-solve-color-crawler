@@ -128,14 +128,14 @@ let dataManager = {
     crawlResult: null,
     difficultyTags: new DataMap([
         [ "id", "name", "color" ],
-        [ 0, "入门", "#e74c3c" ],
+        [ 0, "入门难度", "#e74c3c" ],
         [ 1, "普及-", "#e67e22" ],
         [ 2, "普及/提高-", "#f1c40f" ],
         [ 3, "普及+/提高", "#5eb95e" ],
         [ 4, "提高+/省选-", "#3498db" ],
         [ 5, "省选/NOI-", "#8e44ad" ],
         [ 6, "NOI/NOI+/CTSC", "#2e468c" ],
-        [ 7, "尚无评定", "#bbb" ]
+        [ 7, "暂无评定", "#bbb" ]
     ]),
     algorithmTags: new DataMap([[ "id", "name" ]]),
     difficultyCount: {},
@@ -265,8 +265,8 @@ let UI = {
     },
     load() {
         let userDesc = 'U' + dataManager.crawlResult.uid + ' ' + dataManager.crawlResult.username;
-        let spaceURL = 'https://www.luogu.org/space/show?uid=' + dataManager.crawlResult.uid;
-        let submitURL = 'https://www.luogu.org/recordnew/lists?uid=' + dataManager.crawlResult.uid;
+        let spaceURL = 'https://www.luogu.org/user/' + dataManager.crawlResult.uid;
+        let submitURL = 'https://www.luogu.org/record/list?uid=' + dataManager.crawlResult.uid;
         let solvedURL = submitURL + '&status=12';
         this.userDesc = userDesc;
         document.title = '洛谷做题记录 - ' + userDesc;

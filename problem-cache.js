@@ -1,26 +1,21 @@
 
 'use strict';
 
-const fs   = require('fs');
+const fs   = require('fs-extra');
 const Path = require('path');
 
 const { cache_age_days: CACHE_AGE_DAYS } = require('./options.json');
 const CACHE_AGE = CACHE_AGE_DAYS < 0 ? Infinity : CACHE_AGE_DAYS * 24 * 3600 * 1000;
 
-const { asyncWork, mkdirEx } = require('./utility.js');
-
 const CACHE_FILE = Path.join(__dirname, "cache/problems.json");
 const CURRENT_VERSION = 1;
 
-let saveInterval = null;
 let cacheChanged = false;
-let savingCache = false;
-let forceSaving = false;
 let cacheData = {};
 
 async function readCache() {
     try {
-        cacheData = JSON.parse(await asyncWork(fs.readFile, CACHE_FILE, "utf-8"));
+        cacheData = JSON.parse(await fs.readFile(CACHE_FILE, "utf-8"));
         if (cacheData.version !== CURRENT_VERSION) {
             throw new Error("Version not match");
         }
@@ -33,31 +28,15 @@ async function readCache() {
 }
 
 async function saveCache(force) {
-
     if (!cacheChanged) return;
 
-    if (savingCache) {
-        if (force) forceSaving = true;
-        return;
-    }
-
-    savingCache = true;
-
     try {
-        await mkdirEx(CACHE_FILE);
-        await asyncWork(fs.writeFile, CACHE_FILE, JSON.stringify(cacheData), "utf-8");
+        await fs.ensureDir(Path.dirname(CACHE_FILE));
+        await fs.writeFile(CACHE_FILE, JSON.stringify(cacheData), "utf-8");
     } catch (err) {
         console.log('Failed to save cache:');
         console.log(err.toString());
     }
-
-    savingCache = false;
-
-    if (forceSaving) {
-        forceSaving = false;
-        await saveCache(false);
-    }
-    
 }
 
 module.exports = {
@@ -66,7 +45,6 @@ module.exports = {
         await readCache();
         cacheChanged = true;
         await saveCache();
-        saveInterval = setInterval(async () => await saveCache(false), 5000);
     },
 
     get(pid) {
@@ -89,13 +67,6 @@ module.exports = {
     },
 
     async save() {
-        await saveCache(true);
-    },
-
-    async stop() {
-        if (saveInterval !== null) {
-            clearInterval(saveInterval);
-        }
         await saveCache(true);
     }
 };

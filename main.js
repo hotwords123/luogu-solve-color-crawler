@@ -13,36 +13,34 @@ const { sleep, parseString } = require("./utility.js");
 const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
 
 const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_PARALLEL_TASKS } = require("./options.json");
-const { page_url: PAGE_URL, selectors: SELECTORS } = require("./crawler.json");
+const { page_url: PAGE_URL } = require("./crawler.json");
 
 let lfeConfig = null;
 
-async function getUID(user) {
-    let content = await requestPageContent( parseString(PAGE_URL.getuid, { user: user }) );
-    return JSON.parse(content);
+async function getUID(keyword) {
+    let content = await requestPageContent( parseString(PAGE_URL.getuid, { keyword }) );
+    let data = JSON.parse(content);
+    let user = data.users[0];
+    if (!user) throw new Error("user not found");
+    return parseInt(user.uid);
+}
+
+function getInjectedData(content) {
+    const before = '<script>window._feInjection = JSON.parse(decodeURIComponent("';
+    const after = '"));';
+    let lpos = content.indexOf(before);
+    if (lpos === -1) throw new Error("failed to locate data");
+    lpos += before.length;
+    let rpos = content.indexOf(after, lpos);
+    if (rpos === -1) throw new Error("failed to locate data");
+    let data = JSON.parse(decodeURIComponent(content.slice(lpos, rpos)));
+    if (data.code !== 200) throw new Error("code is not 200");
+    return data;
 }
 
 async function getUserProfile(uid) {
-    let content = await requestPageContent( parseString(PAGE_URL.profile, { uid: uid }) );
-    let $ = cheerio.load(content);
-    let res = {};
-    let tmp = $(SELECTORS.userProfile.username).text().match(/^U-?\d+ (.+)$/);
-    res.username = tmp ? tmp[1] : "";
-    res.submitTotal = $(SELECTORS.userProfile.submitTotal).text();
-    res.solvedTotal = $(SELECTORS.userProfile.solvedTotal).text();
-    res.solved = [];
-    let $h2 = $('h2');
-    let $solvedBox = null;
-    $h2.each((i, a) => {
-        if ($(a).text() === '通过题目') {
-            $solvedBox = $(a).parent();
-            return false;
-        }
-        return true;
-    });
-    $solvedBox.find('div>a')
-        .each((i, a) => res.solved.push($(a).text()));
-    return res;
+    let content = await requestPageContent( parseString(PAGE_URL.profile, { uid }) );
+    return getInjectedData(content).currentData;
 }
 
 async function getConfig() {
@@ -52,15 +50,8 @@ async function getConfig() {
 
 async function getProblemInfo(pid) {
     await sleep(WAIT_TIME.each_crawl);
-    let content = await requestPageContent( parseString(PAGE_URL.problem, { pid: pid }) );
-    const before = '<script>window._feInjection = JSON.parse(decodeURIComponent("', after = '"));';
-    let lpos = content.indexOf(before);
-    if (lpos === -1) throw new Error("failed to locate data");
-    lpos += before.length;
-    let rpos = content.indexOf(after, lpos);
-    if (lpos === -1) throw new Error("failed to locate data");
-    let data = JSON.parse(decodeURIComponent(content.slice(lpos, rpos)));
-    if (data.code !== 200) throw new Error("code is not 200");
+    let content = await requestPageContent( parseString(PAGE_URL.problem, { pid }) );
+    let data = getInjectedData(content);
     let problem = data.currentData.problem;
     return {
         pid: pid,
@@ -74,38 +65,28 @@ async function getProblemInfo(pid) {
 }
 
 async function crawlUser(user) {
-
-    let uid_data = await getUID(user);
-
-    if (uid_data.code !== 200) {
-        console.log("Cannot get uid: " + uid_data["message"]);
-        return;
-    }
-
-    let uid = parseInt(uid_data["more"].uid);
     
     let res = {};
 
     res.time = Date.now();
-    res.uid = uid;
+    res.uid = await getUID(user);
 
     console.log('Crawling user profile...');
 
-    let userProfile = await getUserProfile(uid);
-    let solved_list = userProfile.solved;
+    let userProfile = await getUserProfile(res.uid);
 
-    res.username = userProfile.username;
-    res.submitTotal = userProfile.submitTotal;
-    res.solvedTotal = userProfile.solvedTotal;
+    res.username = userProfile.user.name;
+    res.submitTotal = userProfile.user.submittedProblemCount;
+    res.solvedTotal = userProfile.user.passedProblemCount;
 
-    console.log(`User ID: ${uid}\nUsername: ${userProfile.username}`);
+    console.log(`User ID: ${res.uid}\nUsername: ${res.username}`);
 
     res.solved = [];
     res.solvedUnknown = [];
 
     let requestCount = 0, cacheCount = 0;
 
-    let tasks = solved_list.map((pid) => {
+    let tasks = userProfile.passedProblems.map(({ pid, difficulty, title, type }) => {
         return async () => {
             let cnt = 0;
             for (;;) {
@@ -151,7 +132,7 @@ async function crawlUser(user) {
         if (data) {
             res.solved.push(data);
         } else {
-            res.solvedUnknown.push(solved_list[i]);
+            res.solvedUnknown.push(userProfile.passedProblems[i].pid);
         }
     });
 
@@ -175,11 +156,28 @@ function rlQuestion(rl, msg) {
     });
 }
 
+async function saveCache() {
+    try {
+        await ProbCache.save();
+    } catch (err) {
+        console.log('Failed to save cache.');
+        console.log(err);
+    }
+}
+
 (async () => {
     
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
+    });
+
+    rl.on('SIGINT', async () => {
+        console.log('\n');
+        console.log('Saving cache...');
+        await saveCache();
+        console.log('Exiting');
+        process.exit(0);
     });
 
     await ProbCache.init();
@@ -189,12 +187,14 @@ function rlQuestion(rl, msg) {
         lfeConfig = await getConfig();
     } catch (err) {
         console.log('Failed to fetch config. Try restarting this program.');
+        rl.close();
         process.exit(0);
     }
 
     for (;;) {
         try {
             await crawlUser(await rlQuestion(rl, 'User ID / Username: '));
+            await saveCache();
         } catch (err) {
             console.log('Failed to crawl.');
             console.log(err);
