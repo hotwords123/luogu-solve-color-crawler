@@ -12,7 +12,7 @@
 
 **重要：请勿滥用爬虫，否则由此带来的一切后果自负！！！**
 
-### 1. 首先把项目 clone 到自己电脑上，推荐使用 git（当然你也可以~~~偷懒~~~选择 Download ZIP）：
+### 1. 首先把项目 clone 到自己电脑上，推荐使用 git（当然你也可以选择 Download ZIP）：
 
 ```bash
 git clone https://github.com/hotwords123/luogu-solve-color-crawler.git
