@@ -48,20 +48,72 @@ async function getConfig() {
     return JSON.parse(content);
 }
 
-async function getProblemInfo(pid) {
+async function getSingleProblemTags(pid) {
     await sleep(WAIT_TIME.each_crawl);
     let content = await requestPageContent( parseString(PAGE_URL.problem, { pid }) );
     let data = getInjectedData(content);
     let problem = data.currentData.problem;
-    return {
-        pid: pid,
-        name: problem.title,
-        difficulty: lfeConfig.problemDifficulty.find(a => a.id === problem.difficulty).name,
-        algorithms: problem.tags.map(id => {
+    return problem.tags;
+}
+
+function cmp(a, b) {
+    while (a.length < b.length) a = '0' + a;
+    while (a.length > b.length) b = '0' + b;
+    if (a < b) return -1;
+    if (a > b) return +1;
+    return 0;
+}
+
+async function getProblemListPage(type, page) {
+    await sleep(WAIT_TIME.each_crawl);
+    let content = await requestPageContent( parseString(PAGE_URL.problems, { type, page }) );
+    let data = JSON.parse(content);
+    return data.currentData.problems;
+}
+
+async function getProblemPageCount(type) {
+    let data = await getProblemListPage(type, 1);
+    return Math.ceil(data.count / data.result.length);
+}
+
+function loadProblem({ pid, title, difficulty, tags }) {
+    let info = {
+        pid, name: title,
+        difficulty: lfeConfig.problemDifficulty.find(a => a.id === difficulty).name
+    };
+    if (tags) {
+        info.algorithms = tags.map(id => {
             let tag = lfeConfig.tags[id];
             return tag.type === 'Algorithm' ? tag.name : null
-        }).filter(a => !!a)
-    };
+        }).filter(a => !!a);
+        ProbCache.set(pid, info);
+    } else {
+        info.algorithms = [];
+    }
+    return info;
+}
+
+async function buckCrawl(type, list) {
+    let requestCount = 0;
+    async function binarySearch(arr, lpage, rpage) {
+        if (!arr.length || lpage > rpage) return;
+        if (1.8 * Math.log2(rpage - lpage + 1) + 1 > arr.length) return;
+        let mid = Math.floor((lpage + rpage) / 2);
+        console.log(`Crawling page ${mid} (range = ${lpage} ~ ${rpage}, total = ${arr.length})...`);
+        ++requestCount;
+        let data = await getProblemListPage(type, mid);
+        data.result.forEach((problem) => loadProblem(problem));
+        let first = data.result[0].pid.slice(type.length);
+        let last = data.result[data.result.length - 1].pid.slice(type.length);
+        let matches = arr.filter(a => cmp(a, first) >= 0 && cmp(a, last) <= 0).length;
+        console.log(`Result: ${type + first} ~ ${type + last} (problem = ${data.result.length}, matches = ${matches})`);
+        await binarySearch(arr.filter(a => cmp(a, first) < 0), lpage, mid - 1);
+        await binarySearch(arr.filter(a => cmp(a, last) > 0), mid + 1, rpage);
+    }
+    let pageCount = await getProblemPageCount(type);
+    console.log(`Crawling type ${type}, page count = ${pageCount}`);
+    await binarySearch(list, 1, pageCount);
+    return requestCount;
 }
 
 async function crawlUser(user) {
@@ -84,39 +136,63 @@ async function crawlUser(user) {
     res.solved = [];
     res.solvedUnknown = [];
 
-    let requestCount = 0, cacheCount = 0;
+    let requestCount = 0;
 
-    let tasks = userProfile.passedProblems.map(({ pid, difficulty, title, type }) => {
+    let not_cached = {};
+
+    userProfile.passedProblems.forEach(({ pid, type }) => {
+        if (!ProbCache.has(pid)) {
+            if (!(type in not_cached)) {
+                not_cached[type] = [];
+            }
+            not_cached[type].push(pid.slice(type.length));
+        }
+    });
+
+    for (let type in not_cached) {
+        requestCount += await buckCrawl(type, not_cached[type]);
+    }
+
+    let lastCrawled = '';
+
+    let tasks = userProfile.passedProblems.map((problem) => {
         return async () => {
-            let cnt = 0;
-            for (;;) {
-                try {
-                    let info = ProbCache.get(pid);
-                    if (!info) {
-                        ++requestCount;
-                        info = await getProblemInfo(pid);
-                        if (!info.difficulty) throw new Error("Unknown difficulty");
-                        ProbCache.set(pid, info);
-                    } else {
-                        ++cacheCount;
+            try {
+                let pid = problem.pid;
+                let info = ProbCache.get(pid);
+                let isCache = true;
+                if (!info) {
+                    isCache = false;
+                    ++requestCount;
+                    for (let cnt = 0; ; ) {
+                        try {
+                            problem.tags = await getSingleProblemTags(pid);
+                            break;
+                        } catch (err) {
+                            console.log(err);
+                            if (cnt++ < RETRY_COUNT) {
+                                console.log(`Retry ${cnt}/${RETRY_COUNT} for problem ${pid}...`);
+                            } else {
+                                console.log(`Failed to crawl problem ${pid}!`);
+                                break;
+                            }
+                            let waitTime = WAIT_TIME.crawl_error["other"];
+                            if (err instanceof HTTPError) {
+                                waitTime = WAIT_TIME.crawl_error["http_" + err.statusCode] || waitTime;
+                            } else if (err instanceof TimeoutError) {
+                                waitTime = WAIT_TIME.crawl_error["timeout"] || waitTime;
+                            }
+                            await sleep(waitTime);
+                        }
                     }
-                    return info;
-                } catch (err) {
-                    console.log(err.toString());
-                    if (cnt++ < RETRY_COUNT) {
-                        console.log(`Retry ${cnt}/${RETRY_COUNT} for problem ${pid}...`);
-                    } else {
-                        console.log(`Failed to crawl problem ${pid}!`);
-                        return null;
-                    }
-                    let waitTime = WAIT_TIME.crawl_error["other"];
-                    if (err instanceof HTTPError) {
-                        waitTime = WAIT_TIME.crawl_error["http_" + err.statusCode] || waitTime;
-                    } else if (err instanceof TimeoutError) {
-                        waitTime = WAIT_TIME.crawl_error["timeout"] || waitTime;
-                    }
-                    await sleep(waitTime);
+                    info = loadProblem(problem);
                 }
+                lastCrawled = pid;
+                if (isCache) lastCrawled += ' (catch)';
+                return info;
+            } catch (err) {
+                console.log(err);
+                return null;
             }
         };
     });
@@ -124,21 +200,20 @@ async function crawlUser(user) {
     let tasks_result = await Tasks.run(tasks, {
         max_parallel_tasks: MAX_PARALLEL_TASKS,
         ontaskend({ finished, total }) {
-            console.log(`Crawling: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
+            console.log(`Crawling ${lastCrawled}: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
         }
     });
 
-    tasks_result.forEach((data, i) => {
-        if (data) {
+    tasks_result.forEach((data, index) => {
+        if (!data.failed) {
             res.solved.push(data);
         } else {
-            res.solvedUnknown.push(userProfile.passedProblems[i].pid);
+            res.solvedUnknown.push(userProfile.passedProblems[index]);
         }
     });
 
     console.log(`Crawling took ${((Date.now() - res.time) / 1000).toFixed(2)}s.`);
     console.log(`Request count: ${requestCount}`);
-    console.log(`Cache count: ${cacheCount}`);
     await ResultSaver.save(res, {
         onerror({ filename, error: err }) {
             console.log(`Could not save ${filename}:`);

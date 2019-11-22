@@ -52,7 +52,6 @@ module.exports = {
         let res = cacheData.data[pid];
         if (Date.now() - res.time > CACHE_AGE) {
             cacheData.data[pid] = null;
-            cacheChanged = true;
             return null;
         }
         return res.data;
@@ -64,6 +63,10 @@ module.exports = {
             data: data
         };
         cacheChanged = true;
+    },
+
+    has(pid) {
+        return pid in cacheData.data;
     },
 
     async save() {
