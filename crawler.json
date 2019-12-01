@@ -1,9 +1,10 @@
 {
-    "page_url": {
-        "getuid": "https://www.luogu.org/fe/api/user/search?keyword=<keyword>",
-        "config": "https://www.luogu.org/_lfe/config",
-        "profile": "https://www.luogu.org/user/<uid>",
-        "problem": "https://www.luogu.org/problem/<pid>",
-        "problems": "https://www.luogu.org/problem/list?type=<type>&page=<page>&_contentOnly=1"
+    "host": "https://www.luogu.com.cn",
+    "routes": {
+        "getuid": "/fe/api/user/search?keyword=<keyword>",
+        "config": "/_lfe/config",
+        "profile": "/user/<uid>",
+        "problem": "/problem/<pid>",
+        "problems": "/problem/list?type=<type>&page=<page>&_contentOnly=1"
     }
 }

@@ -13,7 +13,13 @@ const { sleep, parseString } = require("./utility.js");
 const { HTTPError, TimeoutError, requestPageContent } = require('./request.js');
 
 const { retry_count: RETRY_COUNT, wait_time: WAIT_TIME, max_parallel_tasks: MAX_PARALLEL_TASKS } = require("./options.json");
-const { page_url: PAGE_URL } = require("./crawler.json");
+const PAGE_URL = (({ host, routes }) => {
+    let urls = {};
+    for (let id in routes) {
+        urls[id] = host + routes[id];
+    }
+    return urls;
+})(require("./crawler.json"));
 
 let lfeConfig = null;
 
@@ -97,9 +103,12 @@ async function buckCrawl(type, list) {
     let requestCount = 0;
     async function binarySearch(arr, lpage, rpage) {
         if (!arr.length || lpage > rpage) return;
-        if (1.8 * Math.log2(rpage - lpage + 1) + 1 > arr.length) return;
         let mid = Math.floor((lpage + rpage) / 2);
         console.log(`Crawling page ${mid} (range = ${lpage} ~ ${rpage}, total = ${arr.length})...`);
+        if (1.8 * Math.log2(rpage - lpage + 1) + 1 > arr.length) {
+            console.log('Buck crawl backtracking');
+            return;
+        }
         ++requestCount;
         let data = await getProblemListPage(type, mid);
         data.result.forEach((problem) => loadProblem(problem));
@@ -131,7 +140,9 @@ async function crawlUser(user) {
     res.submitTotal = userProfile.user.submittedProblemCount;
     res.solvedTotal = userProfile.user.passedProblemCount;
 
-    console.log(`User ID: ${res.uid}\nUsername: ${res.username}`);
+    console.log('User ID=uid,Username=username,Submit Count=submitTotal,Solved Count=solvedTotal'
+        .split(',').map(a => a.split('=')).map(([title, name]) => title + ': ' + res[name]).join('\n')
+    );
 
     res.solved = [];
     res.solvedUnknown = [];
@@ -153,7 +164,7 @@ async function crawlUser(user) {
         requestCount += await buckCrawl(type, not_cached[type]);
     }
 
-    let lastCrawled = '';
+    let lastCrawled = null, lastCatchCount = 0;
 
     let tasks = userProfile.passedProblems.map((problem) => {
         return async () => {
@@ -187,8 +198,12 @@ async function crawlUser(user) {
                     }
                     info = loadProblem(problem);
                 }
-                lastCrawled = pid;
-                if (isCache) lastCrawled += ' (catch)';
+                if (isCache) {
+                    lastCrawled = null;
+                    lastCatchCount++;
+                } else {
+                    lastCrawled = pid;
+                }
                 return info;
             } catch (err) {
                 console.log(err);
@@ -200,9 +215,18 @@ async function crawlUser(user) {
     let tasks_result = await Tasks.run(tasks, {
         max_parallel_tasks: MAX_PARALLEL_TASKS,
         ontaskend({ finished, total }) {
-            console.log(`Crawling ${lastCrawled}: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
+            if (lastCrawled) {
+                if (lastCatchCount) {
+                    console.log(`Crawling: catch * ${lastCatchCount}`);
+                    lastCatchCount = 0;
+                }
+                console.log(`Crawling ${lastCrawled}: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
+            }
         }
     });
+    if (lastCatchCount) {
+        console.log(`Crawling: catch * ${lastCatchCount}`);
+    }
 
     tasks_result.forEach((data, index) => {
         if (!data.failed) {
@@ -261,6 +285,7 @@ async function saveCache() {
         console.log('Fetching config...');
         lfeConfig = await getConfig();
     } catch (err) {
+        console.log(err);
         console.log('Failed to fetch config. Try restarting this program.');
         rl.close();
         process.exit(0);

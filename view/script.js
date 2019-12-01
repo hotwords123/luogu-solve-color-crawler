@@ -265,8 +265,8 @@ let UI = {
     },
     load() {
         let userDesc = 'U' + dataManager.crawlResult.uid + ' ' + dataManager.crawlResult.username;
-        let spaceURL = 'https://www.luogu.org/user/' + dataManager.crawlResult.uid;
-        let submitURL = 'https://www.luogu.org/record/list?uid=' + dataManager.crawlResult.uid;
+        let spaceURL = 'https://www.luogu.com.cn/user/' + dataManager.crawlResult.uid;
+        let submitURL = 'https://www.luogu.com.cn/record/list?user=' + dataManager.crawlResult.uid;
         let solvedURL = submitURL + '&status=12';
         this.userDesc = userDesc;
         document.title = '洛谷做题记录 - ' + userDesc;
@@ -438,7 +438,7 @@ let problemPanel = {
             let $item = $('<div class="r-panel r-problem">');
             $item.append($('<span class="r-problem-name">')
                 .append($('<a target="_blank">')
-                    .prop('href', 'https://www.luogu.org/problemnew/show/' + prob.pid)
+                    .prop('href', 'https://www.luogu.com.cn/problemnew/show/' + prob.pid)
                     .text(prob.pid + ' ' + prob.name)));
             let $tags = $('<span class="r-panel-right">');
             let diffRow = diffTags.rowData(diffTags.lookupRow('id', prob.diff_id));
