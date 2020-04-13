@@ -92,10 +92,10 @@ function loadProblem({ pid, title, difficulty, tags }) {
             let tag = lfeConfig.tags[id];
             return tag.type === 'Algorithm' ? tag.name : null
         }).filter(a => !!a);
-        ProbCache.set(pid, info);
     } else {
         info.algorithms = [];
     }
+    ProbCache.set(pid, info);
     return info;
 }
 
