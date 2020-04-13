@@ -217,7 +217,7 @@ async function crawlUser(user) {
         ontaskend({ finished, total }) {
             if (lastCrawled) {
                 if (lastCatchCount) {
-                    console.log(`Crawling: catch * ${lastCatchCount}`);
+                    console.log(`Crawling: cache * ${lastCatchCount}`);
                     lastCatchCount = 0;
                 }
                 console.log(`Crawling ${lastCrawled}: ${finished}/${total} (${(finished / total * 100).toFixed(1)}%)...`);
@@ -225,7 +225,7 @@ async function crawlUser(user) {
         }
     });
     if (lastCatchCount) {
-        console.log(`Crawling: catch * ${lastCatchCount}`);
+        console.log(`Crawling: cache * ${lastCatchCount}`);
     }
 
     tasks_result.forEach((data, index) => {
