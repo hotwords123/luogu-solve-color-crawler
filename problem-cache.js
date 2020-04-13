@@ -43,18 +43,28 @@ module.exports = {
     
     async init() {
         await readCache();
+        this.cleanExpired();
         cacheChanged = true;
         await saveCache();
     },
 
-    get(pid) {
-        if (!cacheData.data[pid]) return null;
-        let res = cacheData.data[pid];
-        if (Date.now() - res.time > CACHE_AGE) {
-            cacheData.data[pid] = null;
-            return null;
+    cleanExpired() {
+        let arr = [];
+        for (let pid in cacheData.data) {
+            let res = cacheData.data[pid];
+            if (Date.now() - res.time > CACHE_AGE) {
+                arr.push(pid);
+            }
         }
-        return res.data;
+        for (let pid of arr) {
+            delete cacheData.data[pid];
+        }
+        if (arr.length)
+            cacheChanged = true;
+    },
+
+    get(pid) {
+        return this.has(pid) ? cacheData.data[pid].data : null;
     },
 
     set(pid, data) {
